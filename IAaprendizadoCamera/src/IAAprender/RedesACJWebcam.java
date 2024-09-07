@@ -116,7 +116,7 @@ class IA implements Serializable {
             n.treinarRedePSFileira(Integer.valueOf(sizeTam), size);
 
             progresso.setValue((ini += valueInc));
-
+            System.gc();
         }
 
         progresso.setValue(100);
@@ -170,8 +170,8 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     Image fundoL = null;
     BufferedImage fundo = null;
 
-    static int SIM = -2;
-    static int NAO = 2;
+    static byte SIM = -2;
+    static byte NAO = 2;
     IA ia = new IA();
     int sizeReal = -1;
 
@@ -306,9 +306,10 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         return output;
     }
 
+    ArrayList<Color> cores = new ArrayList<>();
+
     class prancha_camera_impl extends JPanel {
 
-        Color[] colors = {Color.YELLOW, Color.GREEN, Color.BLUE, Color.RED, Color.WHITE};
         BufferedImage local = null;
         boolean setFont = true;
         private static final double CANNY_THRESHOLD_RATIO = .2; //Suggested range .2 - .4
@@ -351,13 +352,13 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             try {
                 if (reconhece) {
                     g.setFont(new Font(Font.SERIF, Font.BOLD, 18));
-                    g.setColor(((colors.length <= nresult || nresult == -1) ? colors[new Random().nextInt(colors.length)]
-                            : colors[nresult]));
+                    g.setColor(((nresult == -1) ? Color.white
+                            : getCor(nresult)));
 
                     g.drawString(resultado.getText(), xI, yI - 20);
 
                 } else {
-                    g.setColor(Color.YELLOW);
+                    g.setColor(Color.DARK_GRAY);
                 }
                 g.drawRect(xI, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
             } catch (Exception e) {
@@ -395,6 +396,23 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         }
     }
 
+    public Color getCor(int index) {
+
+        if (index >= cores.size()) {
+
+            cores.add(gerarCorAleatoriamente());
+        }
+        return cores.get(index);
+    }
+
+    private Color gerarCorAleatoriamente() {
+        Random randColor = new Random();
+        int r = randColor.nextInt(256);
+        int g = randColor.nextInt(256);
+        int b = randColor.nextInt(256);
+        return new Color(r, g, b);
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -426,7 +444,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         treino_progress = new javax.swing.JProgressBar();
         bt_treinar = new javax.swing.JButton();
         bt_treinar1 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
+        bt_treinar2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -682,10 +700,10 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             }
         });
 
-        jButton6.setText("Limpar e Treinar Tempo Real");
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
+        bt_treinar2.setText("Limpar e Treinar Tempo Real");
+        bt_treinar2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
+                bt_treinar2ActionPerformed(evt);
             }
         });
 
@@ -700,7 +718,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(bt_treinar, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE)
                     .addComponent(treino_progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(bt_treinar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(bt_treinar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -714,7 +732,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(bt_treinar1, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton6)
+                        .addComponent(bt_treinar2)
                         .addGap(11, 11, 11)
                         .addComponent(bt_treinar, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1039,9 +1057,9 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         ia = ial;
     }//GEN-LAST:event_jButton5ActionPerformed
 
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        // TODO add your handling code here:
+    private void bt_treinar2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bt_treinar2ActionPerformed
 
+        // TODO add your handling code here:
         // TODO add your handling code here:
         treinaTempoReal = !treinaTempoReal;
 
@@ -1049,7 +1067,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             @Override
             public void run() {
 
-                bt_treinar1.setText("Treinando ...");
+                bt_treinar2.setText("Treinando ...");
                 while (treinaTempoReal) {
                     try {
                         ImageIO.write(imagem.getSubimage(xI, yI,
@@ -1085,7 +1103,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
                         }
 
-                        ia.treinarNew(treino_progress, Integer.valueOf(tamFileira.getText()), Integer.valueOf(neuronios.getText()), bt_treinar);
+                        ia.treinarNew(treino_progress, Integer.valueOf(tamFileira.getText()), Integer.valueOf(neuronios.getText()), bt_treinar2);
 
                     }
 
@@ -1097,9 +1115,9 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
                 }
 
-                bt_treinar1.setEnabled(true);
-                bt_treinar1.setText("Parou Treinar Tempo Real");
-                bt_treinar1.setBackground(Color.YELLOW);
+                bt_treinar2.setEnabled(true);
+                bt_treinar2.setText("Parou Treinar Tempo Real");
+                bt_treinar2.setBackground(Color.YELLOW);
 
             }
         }).start();
@@ -1107,13 +1125,13 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         if (treinaTempoReal) {
 
             // bt_treinar1.setEnabled(false);
-            bt_treinar1.setBackground(Color.GREEN);
+            bt_treinar2.setBackground(Color.GREEN);
         } else {
 
             nresult = -1;
         }
 
-    }//GEN-LAST:event_jButton6ActionPerformed
+    }//GEN-LAST:event_bt_treinar2ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
         JFileChooser fc = new JFileChooser();
@@ -1188,7 +1206,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     public void salvarREDE() {
 
         try {
-            ia.limpaDadosTreino();
+           //ia.limpaDadosTreino();
             ia.xP = Integer.valueOf(largura.getText());
             ia.yP = Integer.valueOf(altura.getText());
 
@@ -1239,13 +1257,13 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     private javax.swing.JButton bt_reconhecer;
     private javax.swing.JButton bt_treinar;
     private javax.swing.JButton bt_treinar1;
+    private javax.swing.JButton bt_treinar2;
     private javax.swing.JComboBox<String> comb_redes;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;

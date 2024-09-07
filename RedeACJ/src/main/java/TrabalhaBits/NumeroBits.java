@@ -11,11 +11,11 @@ public class NumeroBits
 
     public String fileName;
     public ArrayList<Double> valoresSaidaEsperados = new ArrayList<Double>();
-    public double valorEsperado[];
+    public byte valorEsperado[];
     long basemulti = 10000000L;
     BitSet bits = null;
     int maxbits = 22;
-    public double[] vetbits = new double[this.maxbits];
+    public byte[] vetbits = new byte[this.maxbits];
     public long valor = 0L;
 
     public NumeroBits(int maxbits, int basemulti, String frase) {
@@ -29,7 +29,7 @@ public class NumeroBits
             l[cont] = (byte) frase.charAt(cont);
         }
 
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBits(l[0]);
 
         //  System.out.println();
@@ -37,12 +37,12 @@ public class NumeroBits
         // System.out.println();
     }
 
-    public NumeroBits(int maxbits, int basemulti, int[] valor, double... valorEsperado) {
+    public NumeroBits(int maxbits, int basemulti, int[] valor, byte... valorEsperado) {
         this.valorEsperado = valorEsperado;
         this.basemulti = basemulti;
 
         this.maxbits = maxbits;
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBits(valor);
 //     System.out.println();
 //     System.out.println("Travou Aqui " + this.vetbits.length);
@@ -50,12 +50,12 @@ public class NumeroBits
 //     System.out.println();
     }
 
-    public NumeroBits(int maxbits, int basemulti, byte[] valor, double... valorEsperado) {
+    public NumeroBits(int maxbits, int basemulti, byte[] valor, byte... valorEsperado) {
         this.valorEsperado = valorEsperado;
         this.basemulti = basemulti;
 
         this.maxbits = maxbits;
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBits(valor);
         //   System.out.println();
 //     System.out.println("Travou Aqui " + this.vetbits.length);
@@ -63,12 +63,12 @@ public class NumeroBits
         //   System.out.println();
     }
 
-    public NumeroBits(int mult, int maxbits, int basemulti, byte[] valor, double... valorEsperado) {
+    public NumeroBits(int mult, int maxbits, int basemulti, byte[] valor, byte... valorEsperado) {
         this.valorEsperado = valorEsperado;
         this.basemulti = basemulti;
 
         this.maxbits = maxbits = mult * maxbits;
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBytesBits(mult, valor);
         //   System.out.println();
 //     System.out.println("Travou Aqui " + this.vetbits.length);
@@ -76,14 +76,14 @@ public class NumeroBits
         //   System.out.println();
     }
 
-    public NumeroBits(int maxbits, int basemulti, long valor, double... valorEsperado) {
+    public NumeroBits(int maxbits, int basemulti, long valor, byte... valorEsperado) {
         this.valor = valor;
         this.valorEsperado = valorEsperado;
 
         this.basemulti = basemulti;
 
         this.maxbits = maxbits;
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBits(valor);
 //     System.out.println();
 //     
@@ -92,14 +92,14 @@ public class NumeroBits
     }
 
     
-     public NumeroBits(int maxbits, int basemulti, String valor, double... valorEsperado) {
+     public NumeroBits(int maxbits, int basemulti, String valor, byte ...valorEsperado) {
     //    this.valor = valor;
         this.valorEsperado = valorEsperado;
 
         this.basemulti = basemulti;
 
         this.maxbits = maxbits;
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBits(valor);
 //     System.out.println();
 //     
@@ -114,7 +114,7 @@ public class NumeroBits
         this.basemulti = basemulti;
 
         this.maxbits = maxbits;
-        this.vetbits = new double[maxbits];
+        this.vetbits = new byte[maxbits];
         NumeroParaBits(valor);
 //     System.out.println();
 //     
@@ -134,7 +134,7 @@ public class NumeroBits
             
             if(cont<valor.length())
             {
-                vetbits[cont]=Double.valueOf(valor.charAt(cont));
+                vetbits[cont]=(byte)(valor.charAt(cont));
                 
             }else{
                 
@@ -162,7 +162,7 @@ public class NumeroBits
             this.bits = new BitSet(this.maxbits);
 
             for (int i = 0; i < this.maxbits; i++) {
-                this.vetbits[i] = 0.0D;
+                this.vetbits[i] = 0;
             }
 
             return this;
@@ -170,11 +170,11 @@ public class NumeroBits
 
         for (int cont = 0; cont < this.maxbits; cont++) {
             if (this.bits.length() > cont) {
-                this.vetbits[cont] = this.bits.get(cont) ? 1.0D : 0.0D;
+                this.vetbits[cont] =(byte) (this.bits.get(cont) ? 1 : 0);
             } else if (menor && cont + 1 == this.maxbits) {
-                this.vetbits[cont] = 1.0D;
+                this.vetbits[cont] = 0;
             } else {
-                this.vetbits[cont] = 0.0D;
+                this.vetbits[cont] = 0;
             }
 
         }
@@ -199,9 +199,9 @@ public class NumeroBits
                 this.vetbits[cont] = valor[cont];
 
             } else if (cont + 1 == this.maxbits) {
-                this.vetbits[cont] = 1.0D;
+                this.vetbits[cont] = 0;
             } else {
-                this.vetbits[cont] = 1.0D;
+                this.vetbits[cont] = 0;
             }
 
         }
@@ -221,9 +221,9 @@ public class NumeroBits
 
             for (int cont = 0; cont < mult; cont++) {
                 if (bits.length() > cont) {
-                    this.vetbits[index] = bits.get(cont) ? 1.0D : 0.0D;
+                    this.vetbits[index] =(byte) (bits.get(cont) ? 1 : 0);
                 } else {
-                    this.vetbits[index] = 0.0D;
+                    this.vetbits[index] = 0;
                 }
 
                 index++;
@@ -240,9 +240,9 @@ public class NumeroBits
             if (valor.length > cont) {
                 //  this.vetbits[cont] = (valor[cont] == 0) ? 0.0D : 1.0D; 
             } else if (cont + 1 == this.maxbits) {
-                this.vetbits[cont] = 0.0D;
+                this.vetbits[cont] = 0;
             } else {
-                this.vetbits[cont] = 0.0D;
+                this.vetbits[cont] = 0;
             }
 
         }
@@ -315,11 +315,11 @@ public class NumeroBits
         (new NumeroBits(2, 1, 2L)).NumeroParaBits(2L).exibeVet();
     }
 
-    public double[] getValorEsperado() {
+    public byte[] getValorEsperado() {
         return valorEsperado;
     }
 
-    public void setValorEsperado(double[] valorEsperado) {
+    public void setValorEsperado(byte[] valorEsperado) {
         this.valorEsperado = valorEsperado;
     }
 

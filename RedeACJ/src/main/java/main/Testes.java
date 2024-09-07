@@ -30,10 +30,7 @@ public class Testes {
 
             NeuronioAJC nr1 = new NeuronioAJC(5); 
 
-            nr1.setValorTreino(0, 2);
-            nr1.setValorTreino(1, -2);
-            nr1.setValorTreino(2, -2);
-            nr1.setValorTreino(3, -2);
+    
 
               
         

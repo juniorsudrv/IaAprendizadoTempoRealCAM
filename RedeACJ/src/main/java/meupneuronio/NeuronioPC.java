@@ -12,40 +12,43 @@ public class NeuronioPC
         implements Serializable, Cloneable {
 
     public int countIndex = 0;
-    public double invertD, invertM;
+    public byte invertD, invertM;
     public int indice = 0;
-    public int maxtentativas = 50000;
+    public int maxtentativas = 2000;
     public int ncorrecoes = 0;
-    public double[] aentradas = null;
-    public double pesoInicial = 0.13D;
-    public double aprendizado = 0.02D;
-    public double bias = -0.3D;
-    public  ArrayList<MutableDouble> pesos = new ArrayList<>();
-    public double S = 0.0D;
-    public double[] udentritos;
-    double MaxM = 0.0D;
+    public byte[] aentradas = null;
+    public float pesoInicial = 0.17f;
+    public float aprendizado = 0.0025f;
+    public float bias = -0.3f;
+    public float pesos[] = null;
+    public float S = 0.0f;
+    public byte[] udentritos;
+    double MaxM = 0.0f;
 
-    double invertReturnN,
+    float invertReturnN,
             invertReturnP;
 
     public NeuronioPC(int indice, boolean iP) {
 
-        invertD = -new Random().nextDouble();
-        invertM = new Random().nextDouble();
+        invertD =(byte) -3;
+        invertM =(byte) 3;
 
         aprendizado = aprendizado * indice;
-        pesoInicial = pesoInicial * indice;
+        pesoInicial = pesoInicial * indice ;
 
-      bias = new Random().nextInt(10000)*0.004;
+        
+      bias = 0.07f;
       
         this.MaxM = MemoryUtils.maxMemory();
         this.indice = indice;
         if (indice != 0) {
-            this.maxtentativas += indice * 3;
+           // this.maxtentativas += indice * 2;
         }
     }
 
     protected void iniciaPeso(int lt) {
+        this.pesos=new float[lt];
+        
         for (int cont = 0; cont < lt; cont++) {
             if (MemoryUtils.usedMemory() > this.MaxM - 200.0D) {
                 System.out
@@ -53,32 +56,32 @@ public class NeuronioPC
                 System.gc();
             }
 
-            this.pesos.add(new MutableDouble(pesoInicial));
+            this.pesos[cont]= pesoInicial * ((cont+1)*0.03f);
         }
     }
 
-    protected NeuronioPC dentritos(double... entradas) {
+    protected NeuronioPC dentritos(byte... entradas) {
         this.aentradas = entradas;
         this.udentritos = entradas;
 
-        if (this.pesos.size() == 0) {
+        if (this.pesos == null) {
             iniciaPeso(entradas.length);
         }
 
-        if (this.ncorrecoes > this.maxtentativas) {
-            this.aentradas[this.indice] = invertEntrada(this.aentradas[this.indice]);
-        }
+//        if (this.ncorrecoes > this.maxtentativas) {
+//            this.aentradas[this.indice] = invertEntrada(this.aentradas[this.indice]);
+//        }
 
-        double acum = 0.0D;
+        float acum = 0.0f;
         try {
             for (int cont = 0; cont < entradas.length; cont++) {
-                acum += this.pesos.get(cont).getValue() * entradas[cont];
+                acum += this.pesos[cont] * entradas[cont];
 
             }
         } catch (Exception ex) {
             Logger.getLogger(NeuronioPC.class.getName()).log(Level.SEVERE, (String) null, ex);
 
-            System.out.println(" Entrada p  " + this.pesos.size() + " " + entradas.length);
+            System.out.println(" Entrada p  " + this.pesos.length + " " + entradas.length);
             System.exit(0);
         }
          acum += (  this.bias);
@@ -86,28 +89,28 @@ public class NeuronioPC
         return this;
     }
 
-    protected NeuronioPC dentritos(int nBitsG, double... entradas) {
+    protected NeuronioPC dentritos(int nBitsG, byte... entradas) {
         this.aentradas = entradas;
         this.udentritos = entradas;
 
-        if (this.pesos.size() == 0) {
+        if (this.pesos == null) {
             iniciaPeso(nBitsG);
         }
 
-        if (this.ncorrecoes > this.maxtentativas) {
-            this.aentradas[this.indice] = invertEntrada(this.aentradas[this.indice]);
-        }
+//        if (this.ncorrecoes > this.maxtentativas) {
+//            this.aentradas[this.indice] = invertEntrada(this.aentradas[this.indice]);
+//        }
 
-        double acum = 0.0D;
+        float acum = 0.0f;
         try {
             for (int cont = 0; cont < nBitsG; cont++) {
-                acum += this.pesos.get(cont).getValue() * entradas[cont];
+                acum += this.pesos[cont] * entradas[cont];
 
             }
         } catch (Exception ex) {
             Logger.getLogger(NeuronioPC.class.getName()).log(Level.SEVERE, (String) null, ex);
 
-            System.out.println(" Entrada p  " + this.pesos.size() + " " + entradas.length);
+            System.out.println(" Entrada p  " + this.pesos.length + " " + entradas.length);
             System.exit(0);
         }
          acum += (  this.bias);
@@ -115,7 +118,7 @@ public class NeuronioPC
         return this;
     }
 
-    public double saida() {
+    public float saida() {
         //  System.out.println("SaidaAJ " + S);
         return S;
     }
@@ -139,20 +142,20 @@ public class NeuronioPC
         return saida();
     }
 
-    protected void corrigePesos(double valoresTreino[], double[] saidadesejada) {
+    protected void corrigePesos(byte valoresTreino[], byte[] saidadesejada) {
 
         for (int contS = 0; contS < saidadesejada.length; contS++) {
-            double v = saidadesejada[contS];
-            for (int cont = 0; cont < this.pesos.size(); cont++) {
-                double valoresperado = v;
+            byte v = saidadesejada[contS];
+            for (int cont = 0; cont < this.pesos.length; cont++) {
+                float valoresperado = v;
                 valoresperado = valoresperado * valoresTreino[cont];
-                double saida = valoresperado > 0 ? 1 : 0;
+                float saida = valoresperado > 0 ? 1 : 0;
 
-                if (true) {
-                    this.pesos.get(cont).setValue(this.pesos.get(cont).getValue() + this.aprendizado * (valoresperado - saida) * this.bias);
+                if (true) {     
+                    this.pesos[cont]=this.pesos[cont] + this.aprendizado * (valoresperado - saida) * this.bias;
                 } else {
 
-                    this.pesos.get(cont).setValue(this.pesos.get(cont).getValue() + this.aprendizado * (valoresperado - saida) * valoresTreino[cont]);
+                    this.pesos[cont]=this.pesos[cont]  + this.aprendizado * (valoresperado - saida) * valoresTreino[cont];
                 }
             }
         }
@@ -168,7 +171,7 @@ public class NeuronioPC
         return (this.ncorrecoes > this.maxtentativas);
     }
 
-    protected double invertEntrada(double entrada) {
+    protected byte invertEntrada(byte entrada) {
         if (entrada == 1.0D) {
             return invertD;
         }
@@ -176,8 +179,8 @@ public class NeuronioPC
     }
 
     protected void exibePeso() {
-        for (int cont = 0; cont < this.pesos.size(); cont++) {
-            System.out.print("P" + cont + " " + ((MutableDouble) this.pesos.get(cont)).getValue());
+        for (int cont = 0; cont < this.pesos.length; cont++) {
+            System.out.print("P" + cont + " " + ((Float) this.pesos[cont]));
         }
         System.out.println();
     }
