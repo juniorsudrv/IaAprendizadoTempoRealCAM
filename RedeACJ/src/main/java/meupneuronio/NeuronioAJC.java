@@ -546,9 +546,9 @@ public class NeuronioAJC
 
     public double treinaNeuroniosF1Fileiras(NumeroBits valoresEntrada, int camada) {
 
-        Double sM = null;
+        Float sM = null;
         for (int ncount = 0; ncount < neuronios.size(); ncount++) {
-            Double s1 = 0.0;
+            Float s1 = 0.0f;
             NumeroBits n = sM == null ? valoresEntrada : getValorTesteCEsperado(sM.intValue(), valoresEntrada.valorEsperado);
             for (int nNeuro = 0; nNeuro < neuronios.get(ncount).length; nNeuro++) {
                 s1 += neuronios.get(ncount)[nNeuro]
