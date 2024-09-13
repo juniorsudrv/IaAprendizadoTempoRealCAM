@@ -63,7 +63,7 @@ public class NumeroBits
         //   System.out.println();
     }
 
-    public NumeroBits(int mult, int maxbits, int basemulti, byte[] valor, byte... valorEsperado) {
+    public NumeroBits(int mult, int maxbits, int basemulti, int[] valor, byte... valorEsperado) {
         this.valorEsperado = valorEsperado;
         this.basemulti = basemulti;
 
@@ -210,12 +210,12 @@ public class NumeroBits
         return this;
     }
 
-    public NumeroBits NumeroParaBytesBits(int mult, byte[] valor) {
+    public NumeroBits NumeroParaBytesBits(int mult, int[] valor) {
         int m = 0, n = 222222;
 
         int index = 0;
 
-        for (byte b : valor) {
+        for (int b : valor) {
 
             BitSet bits = fromLong(b);
 

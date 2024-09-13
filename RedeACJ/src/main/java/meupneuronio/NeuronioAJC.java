@@ -3,6 +3,7 @@ package meupneuronio;
 import TrabalhaBits.NumeroBits;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -17,7 +18,7 @@ import javax.swing.JOptionPane;
 public class NeuronioAJC
         implements Serializable {
 
-    private ArrayList<NumeroBits> entradasTreinoBits = new ArrayList<>();
+    public ArrayList<NumeroBits> entradasTreinoBits = new ArrayList<>();
 
     class valorEsperado implements Serializable {
 
@@ -44,8 +45,9 @@ public class NeuronioAJC
 
             if (validaValores(entradasTreinoBits.get(cont),
                     entradasTreinoBits.get(entradasTreinoBits.size() - 1))) {
-                JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
-                System.exit(0);
+                entradasTreinoBits.remove(entradasTreinoBits.size() - 1);
+//                JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
+//                System.exit(0);
             }
 
         }
@@ -147,8 +149,10 @@ public class NeuronioAJC
 
                 if (validaValores(entradasTreinoBits.get(cont),
                         entradasTreinoBits.get(entradasTreinoBits.size() - 1))) {
-                    JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
-                    System.exit(0);
+                    
+                        entradasTreinoBits.remove(entradasTreinoBits.size() - 1);
+//                    JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
+//                    System.exit(0);
                 }
 
             }
@@ -167,8 +171,10 @@ public class NeuronioAJC
 
             if (validaValores(entradasTreinoBits.get(cont),
                     entradasTreinoBits.get(entradasTreinoBits.size() - 1))) {
-                JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
-                System.exit(0);
+                
+                    entradasTreinoBits.remove(entradasTreinoBits.size() - 1);
+//                JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
+//                System.exit(0);
             }
 
         }
@@ -185,8 +191,9 @@ public class NeuronioAJC
 
                 if (validaValores(entradasTreinoBits.get(cont),
                         entradasTreinoBits.get(entradasTreinoBits.size() - 1))) {
-                    JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
-                    System.exit(0);
+                        entradasTreinoBits.remove(entradasTreinoBits.size() - 1);
+//                    JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens!");
+//                    System.exit(0);
                 }
 
             }
@@ -196,11 +203,34 @@ public class NeuronioAJC
         }
     }
 
+    public void setValorTreinoNovoBytesBits(BufferedImage valor, byte... valoreEsperado) {
+
+        int[] dados = ((DataBufferInt) ((valor)).getRaster().getDataBuffer()).getData();
+        
+        NumeroBits n = new NumeroBits(8*4, dados.length, 1,   dados.clone(), valoreEsperado);
+
+        n.setFileName("");
+        this.entradasTreinoBits.add(n);
+
+        for (int cont = 0; cont < entradasTreinoBits.size() - 1; cont++) {
+
+            if (validaValores(entradasTreinoBits.get(cont),
+                    entradasTreinoBits.get(entradasTreinoBits.size() - 1))) {
+                    entradasTreinoBits.remove(entradasTreinoBits.size() - 1);
+//                JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens! \n"
+//                        + entradasTreinoBits.get(cont).getFileName() + " \n " + entradasTreinoBits.get(entradasTreinoBits.size() - 1).getFileName());
+//                System.exit(0);
+            }
+
+        }
+
+    }
+
     public void setValorTreinoNovoBytesBits(File valor, byte... valoreEsperado) {
         try {
 
-            byte[] dados = ((DataBufferByte) (ImageIO.read(valor)).getRaster().getDataBuffer()).getData();
-            NumeroBits n = new NumeroBits(8, dados.length, 1, (byte[]) dados.clone(), valoreEsperado);
+            int[] dados = ((DataBufferInt) (ImageIO.read(valor)).getRaster().getDataBuffer()).getData();
+            NumeroBits n = new NumeroBits(8*4, dados.length, 1,  dados.clone(), valoreEsperado);
 
             n.setFileName(valor.getName());
             this.entradasTreinoBits.add(n);
@@ -209,9 +239,10 @@ public class NeuronioAJC
 
                 if (validaValores(entradasTreinoBits.get(cont),
                         entradasTreinoBits.get(entradasTreinoBits.size() - 1))) {
-                    JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens! \n"
-                            + entradasTreinoBits.get(cont).getFileName() + " \n " + entradasTreinoBits.get(entradasTreinoBits.size() - 1).getFileName());
-                    System.exit(0);
+                        entradasTreinoBits.remove(entradasTreinoBits.size() - 1);
+//                    JOptionPane.showMessageDialog(null, "Dados iguais ambiguidade nas imagens! \n"
+//                            + entradasTreinoBits.get(cont).getFileName() + " \n " + entradasTreinoBits.get(entradasTreinoBits.size() - 1).getFileName());
+//                    System.exit(0);
                 }
 
             }
@@ -249,17 +280,25 @@ public class NeuronioAJC
 
     }
 
-    public NumeroBits getValorTreinoNovoFileiras(File valor) {
-        byte[] dados;
-        try {
-            dados = ((DataBufferByte) (ImageIO.read(valor)).getRaster().getDataBuffer()).getData();
-            return new NumeroBits(8, dados.length, 1, (byte[]) dados.clone(), (byte) 0);
-        } catch (IOException ex) {
-            Logger.getLogger(NeuronioAJC.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
+    public NumeroBits getValorTreinoNovoFileiras(BufferedImage valor) {
+        int[] dados;
+
+        dados = ((DataBufferInt) ((valor)).getRaster().getDataBuffer()).getData();
+        return new NumeroBits(8*4, dados.length, 1,   dados.clone(), (byte) 0);
 
     }
+//
+//    public NumeroBits getValorTreinoNovoFileiras(File valor) {
+//        byte[] dados;
+//        try {
+//            dados = ((DataBufferByte) (ImageIO.read(valor)).getRaster().getDataBuffer()).getData();
+//            return new NumeroBits(8*4, dados.length, 1,   dados.clone(), (byte) 0);
+//        } catch (IOException ex) {
+//            Logger.getLogger(NeuronioAJC.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return null;
+//
+//    }
 
     public NumeroBits getValorTreinoNovo(File valor) {
         try {
@@ -442,14 +481,18 @@ public class NeuronioAJC
         if (!continua) {
 
             neuronios = new ArrayList<>();
- 
-            int nNeuro; 
+
+            int nNeuro;
+            int countIndex = 1;
             for (int nTamFileira = 0; nTamFileira < tamFileira; nTamFileira++) {
 
                 NeuronioPC[] camada = new NeuronioPC[NS];
 
                 for (nNeuro = 0; nNeuro < NS; nNeuro++) {
-                    camada[nNeuro] = new NeuronioPC(new Random().nextInt(nBitsG), nNeuro % 2 == 0);
+
+                    camada[nNeuro] = new NeuronioPC(countIndex, nNeuro % 2 == 0);
+
+                    countIndex++;
                 }
 
                 neuronios.add(camada);
@@ -457,7 +500,7 @@ public class NeuronioAJC
             }
 
         }
-       // System.out.println("Iniciou Treino");
+        // System.out.println("Iniciou Treino");
         boolean erro = false;
 
         int cont = 0;
@@ -470,6 +513,7 @@ public class NeuronioAJC
             int nBitsCount = 0;
             erro = false;
 
+           // System.out.println("BitsSize " + nbits.size());
             for (int l = 0; l < nbits.size(); l++) {
                 NumeroBits valoresEntrada = nbits.get(l);
 
@@ -527,9 +571,10 @@ public class NeuronioAJC
 
     public float saidaCompletaFileiras(NumeroBits valoresEntrada) {
 
-        Float sM = null;
+        Integer sM = null;
+        int s1 = 0;
         for (int ncount = 0; ncount < neuronios.size(); ncount++) {
-            Float s1 = 0.0f;
+            s1 = 0;
             NumeroBits n = sM == null ? valoresEntrada : getValorTesteCEsperado(sM.intValue(), valoresEntrada.valorEsperado);
             for (int nNeuro = 0; nNeuro < neuronios.get(ncount).length; nNeuro++) {
                 s1 += neuronios.get(ncount)[nNeuro]
@@ -546,9 +591,10 @@ public class NeuronioAJC
 
     public double treinaNeuroniosF1Fileiras(NumeroBits valoresEntrada, int camada) {
 
-        Float sM = null;
+        Integer sM = null;
+        int s1 = 0;
         for (int ncount = 0; ncount < neuronios.size(); ncount++) {
-            Float s1 = 0.0f;
+            s1 = 0;
             NumeroBits n = sM == null ? valoresEntrada : getValorTesteCEsperado(sM.intValue(), valoresEntrada.valorEsperado);
             for (int nNeuro = 0; nNeuro < neuronios.get(ncount).length; nNeuro++) {
                 s1 += neuronios.get(ncount)[nNeuro]
@@ -598,8 +644,8 @@ public class NeuronioAJC
 
     public static void main(String[] args) {
 
-        byte b=2;
-        float t=0.3f;
+        byte b = 2;
+        float t = 0.3f;
         System.out.println("" + (b * t));
 
 //        BitSet b = BitSet.valueOf(new byte[]{-18}).get(0, 8);
@@ -658,8 +704,8 @@ public class NeuronioAJC
             nr.setValorTreino(999, IMPAR);
             nr.setValorTreino(1000, PAR);
             nr.limitFileira = cont;
-            nr.treinarRedePSFileira(4, 4);
-           //2 2 O método foi executado em 5021
+            nr.treinarRedePSFileira(3, 3);
+            //2 2 O método foi executado em 5021
             int aderrado = 0;
             int c = 2;
             do {
@@ -673,7 +719,7 @@ public class NeuronioAJC
 //                        c)));
                 } else {
                     aderrado++;
-                 //   System.out.println(cont + " AdErrado " + aderrado + " Errado " + c + " " + s);
+                    //   System.out.println(cont + " AdErrado " + aderrado + " Errado " + c + " " + s);
 
                     nr.setValorTreino(c, (c % 2 == 0) ? PAR : IMPAR);
                     nr.treinarRedePSFileiraContinua(4, 8);

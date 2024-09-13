@@ -16,6 +16,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.io.File;
@@ -43,41 +45,81 @@ import meupneuronio.NeuronioAJC;
  */
 class IA implements Serializable {
 
+    int sizeRecX = 16;
+    int sizeRecY = 16;
+    int qtdQdRec = 4;
+    int bdiv = 2;
+
     Thread treino = null;
 
-    int xP = 160;
-    int yP = 120;
+    int xP = 80;
+    int yP = 80;
 
     int ini = 0;
 
-    int sizeTam = 3, size = 3;
+    int sizeTam = 2, size = 2;
 
     public int nresult = -1;
 
     ArrayList<String> itens = new ArrayList<>();
-    ArrayList<NeuronioAJC> nr = new ArrayList<>();
+    ArrayList<ArrayList<NeuronioAJC>> nr = new ArrayList<>();
 
     public void zera() {
         nr = new ArrayList<>();
     }
 
-    public NeuronioAJC getNR(int cont, int size) {
+    public void setValorTreinoByte(int index, BufferedImage img, byte result) {
 
-        if (cont >= nr.size()) {
+        atualizaCoord(img);
 
-            nr.add(new NeuronioAJC(size));
+        int size = -1;
+        if (index >= nr.size()) {
+
+            if (size == -1) {
+
+                File temp = new File("tempTreino" + 0 + ".png");
+                try {
+                    ImageIO.write(convertScaled(img.getSubimage(cdC.get(0).xI, cdC.get(0).yI,
+                            cdC.get(0).largX, cdC.get(0).altX)),
+                            "png", temp);
+                    size = NeuronioAJC.lenghtImagem(temp) * 8 * 4;
+                } catch (IOException ex) {
+                    Logger.getLogger(IA.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+
+            ArrayList<NeuronioAJC> nnr = new ArrayList<NeuronioAJC>();
+
+            for (int cont = 0; cont < qtdQdRec; cont++) {
+
+                nnr.add(new NeuronioAJC(size));
+            }
+
+            nr.add(nnr);
+        }
+
+        for (int cont = 0; cont < cdC.size(); cont++) {
+
+            //  File temp = new File("tempTreino" + cont + ".png");
+//                ImageIO.write(convertScaled(img.getSubimage(cdC.get(cont).xI, cdC.get(cont).yI,
+//                        cdC.get(cont).largX, cdC.get(cont).altX)),
+//                        "png", temp);
+            nr.get(index).get(cont).setValorTreinoNovoBytesBits(convertScaled(img.getSubimage(cdC.get(cont).xI, cdC.get(cont).yI,
+                    cdC.get(cont).largX, cdC.get(cont).altX)), result);
 
         }
 
-        return nr.get(cont);
     }
 
     public void limpaDadosTreino() {
 
-        for (NeuronioAJC n : nr) {
+        for (ArrayList<NeuronioAJC> nR : nr) {
+            for (NeuronioAJC n : nR) {
 
-            n.limpaValoresTreino();
+                n.limpaValoresTreino();
 
+            }
         }
     }
 
@@ -89,13 +131,12 @@ class IA implements Serializable {
         progresso.setValue(0);
         ini = 0;
 
-        for (NeuronioAJC n : nr) {
-
-            System.gc();
-            n.treinarRedePSFileiraValidaExists(sizeTam, size);
-
+        for (ArrayList<NeuronioAJC> nR : nr) {
+            for (NeuronioAJC n : nR) {
+                System.gc();
+                n.treinarRedePSFileiraValidaExists(sizeTam, size);
+            }
             progresso.setValue((ini += valueInc));
-
         }
         System.gc();
         progresso.setValue(100);
@@ -111,12 +152,12 @@ class IA implements Serializable {
         progresso.setValue(0);
         ini = 0;
 
-        for (NeuronioAJC n : nr) {
-
-            n.treinarRedePSFileira(Integer.valueOf(sizeTam), size);
-
+        for (ArrayList<NeuronioAJC> nR : nr) {
+            for (NeuronioAJC n : nR) {
+                System.gc();
+                n.treinarRedePSFileira(sizeTam, size);
+            }
             progresso.setValue((ini += valueInc));
-            System.gc();
         }
 
         progresso.setValue(100);
@@ -124,54 +165,221 @@ class IA implements Serializable {
 
     }
 
-    public String getResult(JComboBox combo, File img) {
-
-        ArrayList<NumeroBits> ar = new ArrayList<>();
-        ar.add(nr.get(0).getValorTreinoNovoFileiras(img));
-
+    public String getResult(JComboBox combo, BufferedImage img) {
+        atualizaCoord(img);
+        String result = null;
+        int conCertResult = -1;
         for (int cont = 0; cont < nr.size(); cont++) {
 
-            //   System.out.println("Results " + nr.get(cont).saidaPSFileira(ar).toString());
-            if (nr.get(cont).saidaPSFileira(ar).get(0) < 0) {
+            ArrayList<NeuronioAJC> nR = nr.get(cont);
+            int contCerto = 0;
+            for (int cNr = 0; cNr < nR.size(); cNr++) {
 
-                nresult = cont;
-                return combo.getItemAt(cont) + "";
+                NeuronioAJC n = nR.get(cNr);
+
+                //File temp = new File("temp" + cNr + ".png");
+//                    ImageIO.write(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
+//                            cdC.get(cNr).largX, cdC.get(cNr).altX)),
+//                            "png", temp);
+                ArrayList<NumeroBits> ar = new ArrayList<>();
+                ar.add(nr.get(0).get(0).getValorTreinoNovoFileiras(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
+                        cdC.get(cNr).largX, cdC.get(cNr).altX))));
+                System.gc();
+                if (n.saidaPSFileira(ar).get(0) >= 0) {
+                    contCerto++;
+                }
             }
+            System.out.println("Concerto2 " + combo.getItemAt(cont) + " " + contCerto);
+
+            if (conCertResult < contCerto) {
+                conCertResult = contCerto;
+                result = combo.getItemAt(cont) + "";
+
+            }
+
         }
-        return null;
+
+        return result;
     }
 
-    public int getResultCont(JComboBox combo, File img) {
+    public int[] getResultCont(JComboBox combo, BufferedImage img) {
 
-        if (nr == null || nr.size() == 0) {
-            return -1;
-        }
-
-        ArrayList<NumeroBits> ar = new ArrayList<>();
-        ar.add(nr.get(0).getValorTreinoNovoFileiras(img));
-
+        atualizaCoord(img);
+        int conCertResult = -1;
+        int contresult = 0;
         for (int cont = 0; cont < nr.size(); cont++) {
 
-            //System.out.println("Results " + nr.get(cont).saidaPSFileira(ar).toString());
-            if (nr.get(cont).saidaPSFileira(ar).get(0) < 0) {
+            ArrayList<NeuronioAJC> nR = nr.get(cont);
+            int contCerto = 0;
+            for (int cNr = 0; cNr < nR.size(); cNr++) {
 
-                nresult = cont;
-                return cont;
+                NeuronioAJC n = nR.get(cNr);
+
+                //  File temp = new File("temp" + cNr + ".png");
+//                    ImageIO.write(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
+//                            cdC.get(cNr).largX, cdC.get(cNr).altX)),
+//                            "png", temp);
+                ArrayList<NumeroBits> ar = new ArrayList<>();
+                ar.add(nr.get(0).get(0).getValorTreinoNovoFileiras(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
+                        cdC.get(cNr).largX, cdC.get(cNr).altX))));
+                System.gc();
+                if (n.saidaPSFileira(ar).get(0) >= 0) {
+                    contCerto++;
+                }
+            }
+
+            if (conCertResult < contCerto) {
+                conCertResult = contCerto;
+                contresult = cont;
+
+            }
+
+        }
+        System.out.println("Concerto " + combo.getItemAt(contresult) + " " + conCertResult + " " + img.getWidth() + " " + img.getHeight());
+        return new int[]{contresult, conCertResult};
+    }
+
+    public int getResultCont(int indexFind, BufferedImage img) {
+        atualizaCoord(img);
+        int acertos = 0;
+        ArrayList<NeuronioAJC> nR = nr.get(indexFind);
+
+        for (int cNr = 0; cNr < nR.size(); cNr++) {
+
+            NeuronioAJC n = nR.get(cNr);
+
+            ArrayList<NumeroBits> ar = new ArrayList<>();
+            ar.add(nr.get(0).get(0).getValorTreinoNovoFileiras(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
+                    cdC.get(cNr).largX, cdC.get(cNr).altX))));
+
+            if (n.saidaPSFileira(ar).get(0) >= 0) {
+                acertos++;
             }
         }
-        return -1;
+        System.out.println("Concerto  " + indexFind + " " + acertos + " " + img.getWidth() + " " + img.getHeight());
+        System.gc();
+        return acertos;
     }
+
+    public BufferedImage convertScaled(BufferedImage img) {
+        BufferedImage bi = new BufferedImage(
+                sizeRecX, sizeRecY,
+                BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D graphics2D = bi.createGraphics();
+        graphics2D.drawImage(img.getScaledInstance(sizeRecX, sizeRecY, Image.SCALE_DEFAULT), 0, 0, null);
+        graphics2D.dispose();
+        return bi;
+    }
+
+    public void atualizaCoord(BufferedImage img) {
+        cdC.clear();
+
+        int xqMin = img.getWidth() / (qtdQdRec / bdiv);
+        int yqMin = img.getHeight() / (qtdQdRec / bdiv);
+
+        int xIIC = 0;
+        int yIIC = 0;
+
+        xqMin = xqMin - 1;
+
+        for (int cont = 0; cont < qtdQdRec; cont++) {
+
+            cdC.add(coordenadasCorte(xIIC, yIIC, xqMin, yqMin));
+
+            xIIC += xqMin;
+
+            if (xIIC + xqMin > img.getWidth()) {
+                yIIC += yqMin;
+                xIIC = 0;
+
+                if (yIIC + yqMin > img.getHeight()) {
+
+                    yIIC = yIIC - ((yIIC + yqMin) - img.getHeight());
+
+                }
+            }
+
+        }
+    }
+
+    public coordenadasCorte coordenadasCorte(int xI, int yI, int largX, int altX) {
+        return new coordenadasCorte(xI, yI, largX, altX);
+
+    }
+
+    public class coordenadasCorte implements Serializable {
+
+        int xI, yI;
+        int largX, altX;
+
+        public coordenadasCorte(int xI, int yI, int largX, int altX) {
+            this.xI = xI;
+            this.yI = yI;
+            this.largX = largX;
+            this.altX = altX;
+        }
+
+    }
+
+    ArrayList<coordenadasCorte> cdC = new ArrayList();
+
 }
 
 public class RedesACJWebcam extends javax.swing.JFrame {
+
+    class analisaResultImgBufferedImg implements Cloneable {
+
+        Color cor;
+        BufferedImage imgRec = null;
+        int iIndexResult;
+        int acertosResult;
+        String result;
+        int xR, yR, lR, aR;
+        public int area;
+
+        public analisaResultImgBufferedImg(BufferedImage imgRec, int xR, int yR, int lR, int aR, Color cor) {
+            this.xR = xR;
+            this.yR = yR;
+            this.lR = lR;
+            this.aR = aR;
+            this.imgRec = imgRec;
+            this.cor = cor;
+
+        }
+
+        public int area() {
+            return aR * lR;
+        }
+
+        @Override
+        public analisaResultImgBufferedImg clone() {
+            try {
+                return (analisaResultImgBufferedImg) super.clone();
+            } catch (CloneNotSupportedException ex) {
+                Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return "analisaResultImgBufferedImg{" + "cor=" + cor + ", imgRec=" + imgRec + ", iIndexResult=" + iIndexResult + ", acertosResult=" + acertosResult + ", result=" + result + ", xR=" + xR + ", yR=" + yR + ", lR=" + lR + ", aR=" + aR + ", area=" + area + '}';
+        }
+
+    }
+
+    ArrayList<analisaResultImgBufferedImg> anR = new ArrayList<>();
+
+    ArrayList<analisaResultImgBufferedImg> anRTemp = new ArrayList<>();
 
     int limitcor = 255;
 
     Image fundoL = null;
     BufferedImage fundo = null;
 
-    static byte SIM = -2;
-    static byte NAO = 2;
+    static byte SIM = 2;
+    static byte NAO = -2;
     IA ia = new IA();
     int sizeReal = -1;
 
@@ -183,6 +391,8 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     int nresult = 1000;
     boolean coletaid0 = false, coletaid1 = false;
     boolean reconhece = false;
+    boolean reconheceSimples = false;
+    boolean reconheceMulti = false;
     boolean treinaTempoReal = false;
     File temp = null;
     RecorteAtual rec = null;
@@ -319,13 +529,15 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
         }
 
+        int vcont = 0;
+
         @Override
         public void paintComponent(Graphics g) {
 
             if (getWidth() > 5 && fundo == null) {
 
                 try {
-                    fundoL = ImageIO.read(new File("images.png"));
+                    fundoL = ImageIO.read(new File("images.jpeg"));
                     fundo = toBufferedImage(fundoL.getScaledInstance(getWidth(), getHeight(), Image.SCALE_DEFAULT));
                 } catch (IOException ex) {
                     Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
@@ -350,9 +562,9 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             }
 
             try {
-                if (reconhece) {
+                if (reconhece||reconheceSimples) {
                     g.setFont(new Font(Font.SERIF, Font.BOLD, 18));
-                    g.setColor(((nresult == -1) ? Color.white
+                    g.setColor(((nresult == -1) ? Color.red
                             : getCor(nresult)));
 
                     g.drawString(resultado.getText(), xI, yI - 20);
@@ -360,11 +572,152 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                 } else {
                     g.setColor(Color.DARK_GRAY);
                 }
+
                 g.drawRect(xI, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+
+                for (int cont = 0; cont < anR.size(); cont++) {
+
+                    analisaResultImgBufferedImg an = anR.get(cont);
+
+                    g.setColor(an.cor);
+                    g.drawString(an.iIndexResult + "_" + an.acertosResult, an.xR, an.yR - 10);
+                    g.drawRect(an.xR, an.yR, an.lR, an.aR);
+
+                }
+
+//                 
+//                           g.drawImage(rotateImageByDegrees(imagem.getSubimage(xI, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText())),
+//                                         vcont++), 0, 0, rec)  ;
+//                                
+//                             
+//                             if(vcont>360)vcont=0;
+//                for (int cont = 0; cont <= 25; cont += 5) {
+//                    g.drawRect(xI + cont, yI + cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+//                    g.drawRect(xI + cont, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+//                    g.drawRect(xI, yI + cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+//                    g.drawRect(xI - cont, yI - cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+//                    g.drawRect(xI - cont, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+//                    g.drawRect(xI, yI - cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+//
+//                }
+//        int xqMin = Integer.parseInt(largura.getText()) / (ia.qtdQdRec / ia.bdiv);
+//        int yqMin = Integer.parseInt(altura.getText()) / (ia.qtdQdRec / ia.bdiv);
+//
+//        int xIIC = 0;
+//        int yIIC = 0;
+//
+//        xqMin = xqMin - 1;
+//
+//        for (int cont = 0; cont < ia.qtdQdRec; cont++) {
+//
+//         g.drawRect(xIIC+xI, yI+yIIC, xqMin, yqMin);
+//            
+//
+//            xIIC += xqMin;
+//
+//            if (xIIC + xqMin  > Integer.parseInt(largura.getText()) ) {
+//                yIIC += yqMin;
+//                xIIC = 0;
+//
+//                if (yIIC + yqMin >  Integer.parseInt(altura.getText()) ) {
+//
+//                    yIIC = yIIC - ((yIIC + yqMin) -  Integer.parseInt(altura.getText()));
+//
+//                }
+//            }
+//
+//        }
+//                for (float cont = 0.05f; cont < 0.40f; cont += 0.05f) {
+//
+//                    if (0.05f == cont) {
+//                        geraCorteMetade(g);
+//                    }
+//                    geraCortes(cont, g);
+//                    geraCortesX0(cont, g);
+//                }
             } catch (Exception e) {
             }
 
             pracha_camera.repaint();
+
+        }
+
+    }
+
+    public void geraCorteMetade(BufferedImage g) {
+
+        int divs = 2;
+
+        int xqMin = ((Integer.parseInt(largura.getText())) / (divs)) - 1;
+        int yqMin = ((Integer.parseInt(altura.getText())) / (1)) - 1;
+
+        int xII = xI;
+        int yII = yI;
+
+        anRTemp.add(new analisaResultImgBufferedImg(g.getSubimage(xII, yII, (Integer.parseInt(largura.getText())), ((Integer.parseInt(altura.getText())) / (1))), xII, yII, xqMin, yqMin, gerarCorAleatoriamente()));
+
+        for (int cont = 0; cont < divs; cont++) {
+            //   anRTemp.add(new analisaResultImgBufferedImg(g.getSubimage(xII, yII, xqMin, yqMin), xII, yII, xqMin, yqMin, gerarCorAleatoriamente()));
+
+            xII += xqMin;
+
+            if (xII + xqMin >= 5 + (xI + Integer.parseInt(largura.getText()))) {
+                xII = xI;
+                yII += yqMin;
+
+            }
+
+        }
+    }
+
+    public void geraCortes(float perc, BufferedImage g) {
+
+        int divs = 1;
+
+        int xqMin = ((Integer.parseInt(largura.getText())) - (int) ((Integer.parseInt(largura.getText())) * perc)) - 1;
+        int yqMin = ((Integer.parseInt(altura.getText())) / (1)) - 1;
+
+        int xII = xI + (int) ((Integer.parseInt(largura.getText())) * perc);
+        int yII = yI;
+
+        for (int cont = 0; cont < divs; cont++) {
+
+            anRTemp.add(new analisaResultImgBufferedImg(g.getSubimage(xII, yII, xqMin, yqMin), xII, yII, xqMin, yqMin, gerarCorAleatoriamente()));
+
+            System.out.println(perc + " -- " + xqMin + " -- " + yqMin);
+            xII += xqMin;
+
+            if (xII + xqMin >= (xI + Integer.parseInt(largura.getText()))) {
+                xII = xI;
+                yII += yqMin;
+
+            }
+
+        }
+
+    }
+
+    public void geraCortesX0(float perc, BufferedImage g) {
+
+        int divs = 1;
+
+        int xqMin = (Integer.parseInt(largura.getText())) - (int) ((Integer.parseInt(largura.getText())) * perc);
+        int yqMin = (Integer.parseInt(altura.getText())) / (1);
+
+        int xII = xI;
+        int yII = yI;
+
+        for (int cont = 0; cont < divs; cont++) {
+
+            anRTemp.add(new analisaResultImgBufferedImg(g.getSubimage(xII, yII, xqMin, yqMin), xII, yII, xqMin, yqMin, gerarCorAleatoriamente()));
+
+            xII += xqMin;
+
+            if (xII + xqMin >= (xI + Integer.parseInt(largura.getText()))) {
+                xII = xI;
+                yII += yqMin;
+
+            }
 
         }
 
@@ -441,6 +794,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         jButton7 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
+        bt_reconhecer1 = new javax.swing.JButton();
         treino_progress = new javax.swing.JProgressBar();
         bt_treinar = new javax.swing.JButton();
         bt_treinar1 = new javax.swing.JButton();
@@ -477,13 +831,13 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        largura.setText("160");
+        largura.setText("100");
 
         jLabel1.setText("Largura");
 
         jLabel2.setText("Altura");
 
-        altura.setText("120");
+        altura.setText("100");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -552,7 +906,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
         jLabel3.setText("Neuronios");
 
-        neuronios.setText("3");
+        neuronios.setText("2");
 
         tamFileira.setText("3");
         tamFileira.setMinimumSize(new java.awt.Dimension(100, 22));
@@ -592,6 +946,13 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             }
         });
 
+        bt_reconhecer1.setText("Reconhecer Simples");
+        bt_reconhecer1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bt_reconhecer1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout painelLayout = new javax.swing.GroupLayout(painel);
         painel.setLayout(painelLayout);
         painelLayout.setHorizontalGroup(
@@ -599,16 +960,6 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             .addGroup(painelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(painelLayout.createSequentialGroup()
-                        .addComponent(memoria)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bt_reconhecer)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(resultado, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, painelLayout.createSequentialGroup()
                         .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(painelLayout.createSequentialGroup()
@@ -639,7 +990,19 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, painelLayout.createSequentialGroup()
                                     .addComponent(comb_redes, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(bt_coletarid1))))))
+                                    .addComponent(bt_coletarid1)))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, painelLayout.createSequentialGroup()
+                        .addComponent(memoria)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(bt_reconhecer)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(bt_reconhecer1)
+                            .addComponent(resultado, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
         painelLayout.setVerticalGroup(
@@ -666,23 +1029,25 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                         .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(comb_redes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(bt_coletarid1))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton4)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jButton7)
-                        .addComponent(jButton8)))
                 .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(painelLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton4)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jButton7)
+                                .addComponent(jButton8)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(memoria, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(painelLayout.createSequentialGroup()
                         .addGap(10, 10, 10)
+                        .addComponent(bt_reconhecer1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(painelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jButton5)
                             .addComponent(jButton3)
                             .addComponent(bt_reconhecer)
-                            .addComponent(resultado, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(painelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(memoria, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(resultado, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGap(0, 10, Short.MAX_VALUE))
         );
 
@@ -744,14 +1109,21 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void pracha_cameraMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pracha_cameraMouseReleased
-        if (evt.getX() + Integer.parseInt(largura.getText()) <= imagem.getWidth()
+
+        if (evt.getButton() == MouseEvent.BUTTON3) {
+
+            largura.setText((evt.getX() - xI) + "");
+            altura.setText((evt.getY() - yI) + "");
+
+        } else if (evt.getX() + Integer.parseInt(largura.getText()) <= imagem.getWidth()
                 && evt.getY() + Integer.parseInt(altura.getText()) <= imagem.getHeight()) {
+
             xI = evt.getX();
             yI = evt.getY();
 
         }
 
-// TODO add your handling code here:
+
     }//GEN-LAST:event_pracha_cameraMouseReleased
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -858,14 +1230,15 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
                     for (int cont = 0; cont < new File("IMG" + comb_redes.getItemAt(c_redes) + "/").listFiles().length; cont++) {
                         File file = new File("IMG" + comb_redes.getItemAt(c_redes) + "/").listFiles()[cont];
-                        if (size == -1) {
-                            size = NeuronioAJC.lenghtImagem(file) * 8;
-                        }
+
                         //22500
                         System.out.println(c_redes + " ValorTreino " + file.getName() + " " + SIM);
 
-                        ia.getNR(c_redes, size).setValorTreinoNovoBytesBits(file,
-                                SIM);
+                        try {
+                            ia.setValorTreinoByte(c_redes, ImageIO.read(file), SIM);
+                        } catch (IOException ex) {
+                            Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
 
                     for (int nredes = 0; nredes < comb_redes.getItemCount(); nredes++) {
@@ -878,16 +1251,25 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                                 }
                                 System.out.println(c_redes + " ValorTreino " + file.getName() + " " + NAO);
 
-                                ia.getNR(c_redes, size).setValorTreinoNovoBytesBits(file,
-                                        NAO);
+                                try {
+                                    ia.setValorTreinoByte(c_redes, ImageIO.read(file), NAO);
+                                } catch (IOException ex) {
+                                    Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+
                             }
                         }
                     }
                 }
 
                 ia.treinar(treino_progress, Integer.valueOf(tamFileira.getText()), Integer.valueOf(neuronios.getText()), bt_treinar);
-                System.out.println(ia.getResult(comb_redes, new File("IMG" + comb_redes.getItemAt(0) + "/").listFiles()[0]));
-                System.out.println(ia.getResult(comb_redes, new File("IMG" + comb_redes.getItemAt(1) + "/").listFiles()[0]));
+                try {
+                    System.out.println(ia.getResult(comb_redes, ImageIO.read(new File("IMG" + comb_redes.getItemAt(0) + "/").listFiles()[0])));
+                    System.out.println(ia.getResult(comb_redes, ImageIO.read(new File("IMG" + comb_redes.getItemAt(1) + "/").listFiles()[0])));
+                } catch (IOException ex) {
+                    Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
                 salvarREDE();
                 bt_treinar.setText("Treino Completo");
                 bt_treinar.setEnabled(true);
@@ -900,25 +1282,57 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
     private void bt_reconhecerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bt_reconhecerActionPerformed
 
-        reconhece = !reconhece;
+        reconheceMulti = !reconheceMulti;
 
         new Thread(new Runnable() {
             @Override
             public void run() {
 
-                while (reconhece) {
+                ArrayList<analisaResultImgBufferedImg> anRTempLocal = new ArrayList<>();
 
-                    try {
-                        ImageIO.write(imagem.getSubimage(xI, yI,
-                                Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText())),
-                                "png", temp);
-                        rec.setImagem_recorte(ImageIO.read(temp));
-                    } catch (IOException ex) {
-                        Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
+                while (reconheceMulti) {
+
+                    anRTemp.clear();
+
+                    BufferedImage bi = imagem;
+
+                    // rec.setImagem_recorte(ImageIO.read(temp));
+                    for (float cont = 0.10f; cont <= 0.50f; cont += 0.20f) {
+
+                        if (0.10f == cont) {
+                            geraCorteMetade(bi);
+                        }
+                        geraCortes(cont, bi);
+                        geraCortesX0(cont, bi);;
+
                     }
 
-                    resultado.setText(ia.getResult(comb_redes, temp));
-                    nresult = ia.nresult;
+                    for (int indexFind = 0; indexFind < comb_redes.getItemCount() ; indexFind++) {
+                        analisaResultImgBufferedImg resp = null;
+                        for (analisaResultImgBufferedImg ar : anRTemp) {
+
+                            BufferedImage bf = bi.getSubimage(ar.xR, ar.yR, ar.lR, ar.aR);
+
+                            int acertos = ia.getResultCont(indexFind, bf);
+
+                            if (resp == null || resp.acertosResult <= acertos || resp.acertosResult <= acertos && resp.area() >= ar.area()) {
+                                resp = ar.clone();
+                                resp.iIndexResult = indexFind;
+                                resp.acertosResult = acertos;
+                                resp.area = ar.area();
+                            }
+                        }
+
+                        anRTempLocal.add(resp);
+
+                    }
+
+                    anR = anRTempLocal;
+
+                    for (int t = 0; t < anR.size(); t++) {
+
+                        System.out.println("" + anR.get(t).toString());
+                    }
 
                     try {
                         Thread.sleep(800);
@@ -926,12 +1340,14 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                         Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
                     }
 
+                    break;
+
                 }
 
             }
         }).start();
 
-        if (reconhece) {
+        if (reconheceMulti) {
 
             bt_reconhecer.setText("Reconhecendo!");
             bt_reconhecer.setBackground(Color.GREEN);
@@ -939,6 +1355,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
             bt_reconhecer.setText("Reconhecer!");
             bt_reconhecer.setBackground(Color.YELLOW);
             nresult = -1;
+            anR.clear();
         }
 
 
@@ -982,37 +1399,51 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
                 bt_treinar1.setText("Treinando ...");
                 while (treinaTempoReal) {
-                    try {
-                        ImageIO.write(imagem.getSubimage(xI, yI,
-                                Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText())),
-                                "png", temp);
-                        rec.setImagem_recorte(ImageIO.read(temp));
-                    } catch (IOException ex) {
-                        Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
-                    }
 
-                    if (sizeReal < 10) {
+                    BufferedImage bimg = imagem.getSubimage(xI, yI,
+                            Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
 
-                        sizeReal = NeuronioAJC.lenghtImagem(temp) * 8;
-                    }
+                    rec.setImagem_recorte(bimg);
 
-                    int result = ia.getResultCont(comb_redes, temp);
+                    int result[] = ia.getResultCont(comb_redes, bimg);
 
-                    System.out.println(" result " + result + " " + comb_redes.getSelectedIndex());
+                    System.out.println(" result " + result[0] + " " + comb_redes.getSelectedIndex());
 
-                    if (comb_redes.getSelectedIndex() == result) {
+                    if (comb_redes.getSelectedIndex() == result[0] && result[1] >= ia.qtdQdRec - 1) {
 
-                        resultado.setText(comb_redes.getItemAt(result));
+                        resultado.setText(comb_redes.getItemAt(result[0]));
                         nresult = ia.nresult;
 
                     } else {
 
                         resultado.setText("---------------");
                         nresult = -1;
+
                         for (int cont = 0; cont < comb_redes.getItemCount(); cont++) {
 
-                            ia.getNR(cont, sizeReal).setValorTreinoNovoBytesBits(temp,
-                                    cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                            bimg = imagem.getSubimage(xI, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+                            ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+
+                            for (int vcont = 0; vcont <= 360; vcont += 20) {
+
+                                bimg = rotateImageByDegrees(imagem.getSubimage(xI, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText())),
+                                        vcont);
+                                ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                                //                                bimg = imagem.getSubimage(xI + cont, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+                                //                                ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                                //
+                                //                                bimg = imagem.getSubimage(xI, yI + cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+                                //                                ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                                //
+                                //                                bimg = imagem.getSubimage(xI - cont, yI - cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+                                //                                ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                                //
+                                //                                bimg = imagem.getSubimage(xI - cont, yI, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+                                //                                ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                                //
+                                //                                bimg = imagem.getSubimage(xI, yI - cont, Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+                                //                                ia.setValorTreinoByte(cont, bimg, cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                            }
 
                         }
 
@@ -1083,7 +1514,8 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                         sizeReal = NeuronioAJC.lenghtImagem(temp) * 8;
                     }
 
-                    int result = ia.getResultCont(comb_redes, temp);
+                    int result = ia.getResultCont(comb_redes, imagem.getSubimage(xI, yI,
+                            Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText())))[0];
 
                     System.out.println(" result " + result + " " + comb_redes.getSelectedIndex());
 
@@ -1098,8 +1530,8 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                         nresult = -1;
                         for (int cont = 0; cont < comb_redes.getItemCount(); cont++) {
 
-                            ia.getNR(cont, sizeReal).setValorTreinoNovoBytesBits(temp,
-                                    cont == comb_redes.getSelectedIndex() ? SIM : NAO);
+                            ia.setValorTreinoByte(cont, imagem.getSubimage(xI, yI,
+                                    Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText())), cont == comb_redes.getSelectedIndex() ? SIM : NAO);
 
                         }
 
@@ -1184,6 +1616,50 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 // TODO add your handling code here:
     }//GEN-LAST:event_jButton9ActionPerformed
 
+    private void bt_reconhecer1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bt_reconhecer1ActionPerformed
+        reconheceSimples = !reconheceSimples;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                do {
+                    if (reconheceSimples) {
+                        BufferedImage bimg = imagem.getSubimage(xI, yI,
+                                Integer.parseInt(largura.getText()), Integer.parseInt(altura.getText()));
+
+                        rec.setImagem_recorte(bimg);
+
+                        int result[] = ia.getResultCont(comb_redes, bimg);
+
+                        System.out.println(" result " + result[0] + " " + comb_redes.getSelectedIndex());
+
+                        resultado.setText(comb_redes.getItemAt(result[0]));
+                        nresult = result[0];
+                    }
+
+                    try {
+                        Thread.sleep(800);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(RedesACJWebcam.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } while (reconheceSimples);
+
+            }
+        }).start();
+
+        if (reconheceSimples) {
+
+            bt_reconhecer1.setText("Reconhecendo!");
+            bt_reconhecer1.setBackground(Color.GREEN);
+        } else {
+            bt_reconhecer1.setText("Reconhecer!");
+            bt_reconhecer1.setBackground(Color.YELLOW);
+            nresult = -1;
+        }
+
+        // TODO add your handling code here:
+    }//GEN-LAST:event_bt_reconhecer1ActionPerformed
+
     public void atualizaColetas() {
 
         try {
@@ -1206,7 +1682,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     public void salvarREDE() {
 
         try {
-           //ia.limpaDadosTreino();
+            //ia.limpaDadosTreino();
             ia.xP = Integer.valueOf(largura.getText());
             ia.yP = Integer.valueOf(altura.getText());
 
@@ -1216,6 +1692,31 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         }
 
         JOptionPane.showMessageDialog(null, "Salvo");
+    }
+
+    public BufferedImage rotateImageByDegrees(BufferedImage img, double angle) {
+
+        double rads = Math.toRadians(angle);
+        double sin = Math.abs(Math.sin(rads)), cos = Math.abs(Math.cos(rads));
+        int w = img.getWidth();
+        int h = img.getHeight();
+        int newWidth = (int) Math.floor(w * cos + h * sin);
+        int newHeight = (int) Math.floor(h * cos + w * sin);
+
+        BufferedImage rotated = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = rotated.createGraphics();
+        AffineTransform at = new AffineTransform();
+        at.translate((newWidth - w) / 2, (newHeight - h) / 2);
+
+        int x = w / 2;
+        int y = h / 2;
+
+        at.rotate(rads, x, y);
+        g2d.setTransform(at);
+        g2d.drawImage(img, 0, 0, this);
+        g2d.dispose();
+
+        return rotated;
     }
 
     public static void main(String args[]) {
@@ -1255,6 +1756,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
     private javax.swing.JTextField altura;
     private javax.swing.JButton bt_coletarid1;
     private javax.swing.JButton bt_reconhecer;
+    private javax.swing.JButton bt_reconhecer1;
     private javax.swing.JButton bt_treinar;
     private javax.swing.JButton bt_treinar1;
     private javax.swing.JButton bt_treinar2;

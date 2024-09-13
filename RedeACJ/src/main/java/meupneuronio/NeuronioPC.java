@@ -56,7 +56,7 @@ public class NeuronioPC
                 System.gc();
             }
 
-            this.pesos[cont]= pesoInicial * ((cont+1)*0.03f);
+            this.pesos[cont]= pesoInicial ;//* ((cont+1)*0.07f);
         }
     }
 
@@ -151,7 +151,7 @@ public class NeuronioPC
                 valoresperado = valoresperado * valoresTreino[cont];
                 float saida = valoresperado > 0 ? 1 : 0;
 
-                if (true) {     
+                if (cont+1==pesos.length) {     
                     this.pesos[cont]=this.pesos[cont] + this.aprendizado * (valoresperado - saida) * this.bias;
                 } else {
 
