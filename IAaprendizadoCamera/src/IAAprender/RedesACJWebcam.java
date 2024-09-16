@@ -6,7 +6,6 @@
 package IAAprender;
 
 import Biblis.MemoryUtils;
-import OpIO.Dados;
 import OpIO.IO;
 import TrabalhaBits.NumeroBits;
 import com.github.sarxos.webcam.Webcam;
@@ -37,7 +36,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import jcanny.JCanny;
-import meupneuronio.NeuronioAJC;
+import meupneuronio.OpenAJC;
 
 /**
  *
@@ -62,7 +61,7 @@ class IA implements Serializable {
     public int nresult = -1;
 
     ArrayList<String> itens = new ArrayList<>();
-    ArrayList<ArrayList<NeuronioAJC>> nr = new ArrayList<>();
+    ArrayList<ArrayList<OpenAJC>> nr = new ArrayList<>();
 
     public void zera() {
         nr = new ArrayList<>();
@@ -82,18 +81,18 @@ class IA implements Serializable {
                     ImageIO.write(convertScaled(img.getSubimage(cdC.get(0).xI, cdC.get(0).yI,
                             cdC.get(0).largX, cdC.get(0).altX)),
                             "png", temp);
-                    size = NeuronioAJC.lenghtImagem(temp) * 8 * 4;
+                    size = OpenAJC.lenghtImagem(temp) * 8 * 4;
                 } catch (IOException ex) {
                     Logger.getLogger(IA.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
             }
 
-            ArrayList<NeuronioAJC> nnr = new ArrayList<NeuronioAJC>();
+            ArrayList<OpenAJC> nnr = new ArrayList<OpenAJC>();
 
             for (int cont = 0; cont < qtdQdRec; cont++) {
 
-                nnr.add(new NeuronioAJC(size));
+                nnr.add(new OpenAJC(size));
             }
 
             nr.add(nnr);
@@ -114,8 +113,8 @@ class IA implements Serializable {
 
     public void limpaDadosTreino() {
 
-        for (ArrayList<NeuronioAJC> nR : nr) {
-            for (NeuronioAJC n : nR) {
+        for (ArrayList<OpenAJC> nR : nr) {
+            for (OpenAJC n : nR) {
 
                 n.limpaValoresTreino();
 
@@ -131,8 +130,8 @@ class IA implements Serializable {
         progresso.setValue(0);
         ini = 0;
 
-        for (ArrayList<NeuronioAJC> nR : nr) {
-            for (NeuronioAJC n : nR) {
+        for (ArrayList<OpenAJC> nR : nr) {
+            for (OpenAJC n : nR) {
                 System.gc();
                 n.treinarRedePSFileiraValidaExists(sizeTam, size);
             }
@@ -152,8 +151,8 @@ class IA implements Serializable {
         progresso.setValue(0);
         ini = 0;
 
-        for (ArrayList<NeuronioAJC> nR : nr) {
-            for (NeuronioAJC n : nR) {
+        for (ArrayList<OpenAJC> nR : nr) {
+            for (OpenAJC n : nR) {
                 System.gc();
                 n.treinarRedePSFileira(sizeTam, size);
             }
@@ -171,11 +170,11 @@ class IA implements Serializable {
         int conCertResult = -1;
         for (int cont = 0; cont < nr.size(); cont++) {
 
-            ArrayList<NeuronioAJC> nR = nr.get(cont);
+            ArrayList<OpenAJC> nR = nr.get(cont);
             int contCerto = 0;
             for (int cNr = 0; cNr < nR.size(); cNr++) {
 
-                NeuronioAJC n = nR.get(cNr);
+                OpenAJC n = nR.get(cNr);
 
                 //File temp = new File("temp" + cNr + ".png");
 //                    ImageIO.write(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
@@ -209,11 +208,11 @@ class IA implements Serializable {
         int contresult = 0;
         for (int cont = 0; cont < nr.size(); cont++) {
 
-            ArrayList<NeuronioAJC> nR = nr.get(cont);
+            ArrayList<OpenAJC> nR = nr.get(cont);
             int contCerto = 0;
             for (int cNr = 0; cNr < nR.size(); cNr++) {
 
-                NeuronioAJC n = nR.get(cNr);
+                OpenAJC n = nR.get(cNr);
 
                 //  File temp = new File("temp" + cNr + ".png");
 //                    ImageIO.write(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
@@ -242,11 +241,11 @@ class IA implements Serializable {
     public int getResultCont(int indexFind, BufferedImage img) {
         atualizaCoord(img);
         int acertos = 0;
-        ArrayList<NeuronioAJC> nR = nr.get(indexFind);
+        ArrayList<OpenAJC> nR = nr.get(indexFind);
 
         for (int cNr = 0; cNr < nR.size(); cNr++) {
 
-            NeuronioAJC n = nR.get(cNr);
+            OpenAJC n = nR.get(cNr);
 
             ArrayList<NumeroBits> ar = new ArrayList<>();
             ar.add(nr.get(0).get(0).getValorTreinoNovoFileiras(convertScaled(img.getSubimage(cdC.get(cNr).xI, cdC.get(cNr).yI,
@@ -887,6 +886,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
         });
 
         bt_reconhecer.setText("Reconhecer");
+        bt_reconhecer.setEnabled(false);
         bt_reconhecer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bt_reconhecerActionPerformed(evt);
@@ -1247,7 +1247,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
                             for (int cont = 0; cont < new File("IMG" + comb_redes.getItemAt(nredes) + "/").listFiles().length; cont++) {
                                 File file = new File("IMG" + comb_redes.getItemAt(nredes) + "/").listFiles()[cont];
                                 if (size == -1) {
-                                    size = NeuronioAJC.lenghtImagem(file) * 8;
+                                    size = OpenAJC.lenghtImagem(file) * 8;
                                 }
                                 System.out.println(c_redes + " ValorTreino " + file.getName() + " " + NAO);
 
@@ -1511,7 +1511,7 @@ public class RedesACJWebcam extends javax.swing.JFrame {
 
                     if (sizeReal < 10) {
 
-                        sizeReal = NeuronioAJC.lenghtImagem(temp) * 8;
+                        sizeReal = OpenAJC.lenghtImagem(temp) * 8;
                     }
 
                     int result = ia.getResultCont(comb_redes, imagem.getSubimage(xI, yI,
